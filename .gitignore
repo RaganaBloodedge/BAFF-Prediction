@@ -7,14 +7,17 @@ venv/
 .ipynb_checkpoints/
 
 # ---------- 数据与产物 ----------
-# 默认忽略全部，仅保留随仓库分发的样例与论文结果
+# 默认忽略全部，仅放行随仓库分发的样例、论文结果与消融结果
 /data/*
 !/data/sample/
 /results/*
 !/results/aggregated/
 !/results/README.md
+!/results/ablations/
+!/results/predictions.csv
 /figures/*
 !/figures/sample/
+!/figures/ablations/
 
 # ---------- 模型权重（见 third_party/FinBERT2.md） ----------
 /models/
