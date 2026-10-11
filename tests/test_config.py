@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import textwrap
 
+import pytest
+
 from baff import config as C
+
+# load_config 在缺 PyYAML 时会静默退回默认值——那是运行时容错，
+# 但那样"解析与合并"就没被测到，因此本文件在无 PyYAML 的环境下整体跳过。
+pytest.importorskip("yaml", reason="配置解析测试需要 PyYAML")
 
 
 def test_builtin_defaults_have_expected_shape():
