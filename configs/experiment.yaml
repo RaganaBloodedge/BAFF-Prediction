@@ -1,0 +1,27 @@
+# BAFF 实验配置
+#
+# 这是实验参数的单一事实来源：experiments/ 下的脚本把它作为默认值，
+# 命令行参数可以逐项覆盖。改动这里等于改动"默认实验"。
+
+backtest:
+  window: 20          # 回溯窗口（交易日）
+  hidden_dim: 64      # LSTM 隐藏维度
+  num_layers: 2       # LSTM 层数
+  epochs: 200         # 训练轮数
+  batch_size: 32
+  lr: 0.001
+  seeds: [0]          # 多随机种子可估计训练噪声，如 [0, 1, 2]
+  threads: 1          # 模型极小，单线程通常比多线程快
+
+ablations:
+  # 调制强度扫描范围。论文只取 0.5，这里覆盖到 1.0 以观察上界。
+  alpha_grid: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0]
+  # soft 机制的软化尺度，单位是日收益率（约 1e-2）
+  tau_grid: [0.005, 0.01, 0.02, 0.05]
+  mechanisms: [sign, soft, magnitude]
+  transforms: [raw, cs_zscore]
+
+paper_window:
+  # 论文实验窗口：2026-02-27 起 22 个交易日
+  start: "20260227"
+  days: 22
