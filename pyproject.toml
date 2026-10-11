@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "baff"
+version = "0.2.0"
+description = "BAFF: Behavior-Aware Forecasting Framework — LSTM price model modulated by FinBERT2 news sentiment"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Li Yichen" }]
+keywords = ["stock-prediction", "sentiment-analysis", "finbert", "lstm", "quantitative-finance"]
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+# 训练与回测需要；推理本身很小，装 CPU 版即可
+torch = ["torch>=2.0"]
+# 抓取与情绪打分链路
+pipeline = ["tushare>=1.4", "requests>=2.31", "beautifulsoup4>=4.12", "transformers>=4.40"]
+dev = ["pytest>=7.4", "ruff>=0.6"]
+
+[tool.setuptools.packages.find]
+include = ["baff*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["data", "results", "figures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    "E501",  # 行长由 line-length 提示，不强制截断中文注释
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 实验脚本允许较长的参数说明与打印
+"experiments/*.py" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "torch: 需要 torch 的测试，CI 中单独跑一个 job",
+]
