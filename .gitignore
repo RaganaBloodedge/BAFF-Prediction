@@ -12,6 +12,7 @@ venv/
 !/data/sample/
 /results/*
 !/results/aggregated/
+!/results/README.md
 /figures/*
 !/figures/sample/
 
