@@ -1,0 +1,25 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# ---------- 数据与产物 ----------
+# 默认忽略全部，仅保留随仓库分发的样例与论文结果
+/data/*
+!/data/sample/
+/results/*
+!/results/aggregated/
+/figures/*
+!/figures/sample/
+
+# ---------- 模型权重（见 third_party/FinBERT2.md） ----------
+/models/
+
+# ---------- 编辑器与系统 ----------
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

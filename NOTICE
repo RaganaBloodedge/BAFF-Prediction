@@ -1,0 +1,22 @@
+# 第三方组件与数据来源声明
+
+本仓库的代码为 BAFF 框架的自研实现。其中情绪编码环节依赖第三方开源项目，
+数据抓取环节依赖第三方数据服务，特此声明归属。
+
+## FinBERT2（熵简科技开源套件）
+
+`sentiment/` 不附带语言模型，而是调用熵简科技开源的 FinBERT2 套件完成
+金融文本的情绪编码与下游微调。本仓库**不重新分发**其源码与权重。
+
+- 项目：FinBERT2
+- 仓库：https://github.com/valuesimplex/FinBERT2
+- 许可：MIT License, Copyright (c) 2024 mengyougithub
+- 论文：Xu et al. *FinBERT2*. KDD '25. https://dl.acm.org/doi/10.1145/3711896.3737219
+
+## 数据来源
+
+- 股票日线行情：Tushare（https://tushare.pro）
+- 财经新闻标题：同花顺个股页（https://stockpage.10jqka.com.cn）
+
+两者均为第三方服务，数据版权归原始提供方所有。本仓库只提供抓取脚本，
+不分发原始数据，使用者需自行申请相应凭据并遵守其服务条款。
