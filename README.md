@@ -35,28 +35,34 @@ p̂_adj  = p_t · (1 + r_adj)
 
 ```
 BAFF-Prediction/
+├── baff/                              核心包（可安装、可测试）
+│   ├── mechanism.py                   调制机制族：信号变换 × 调制函数
+│   ├── backtest.py                    回测引擎（逐日重训，缓存原始预测）
+│   ├── evaluate.py                    机制评估：误差 / 改善量 / 显著性汇总
+│   ├── train.py                       LSTM 训练（固定种子）与标准化
+│   ├── data.py                        数据加载（日期分区 / 平铺两种布局）
+│   ├── metrics.py                     MAE / RMSE / MRE / 方向准确率 / IC
+│   ├── stats.py                       Wilcoxon 配对检验 + bootstrap CI
+│   ├── models.py                      PriceLSTM / PriceLSTMConcat
+│   ├── config.py                      实验配置加载
+│   └── paths.py                       路径常量与股票池
+├── experiments/                       升级后的实验入口
+│   ├── run_backtest.py                回测 → results/predictions.csv
+│   └── run_ablations.py               α 扫描 / 机制对比 / 显著性检验
 ├── fetch/                             数据抓取
 │   ├── fetch_price.py                 Tushare 日线 → data/price_{code}.csv
 │   └── fetch_news_ths.py              同花顺公司新闻标题 → data/news_{code}.csv
 ├── sentiment/                         情绪编码
 │   ├── build_sentiment_from_csv.py    批量新闻 → 日度情绪分 data/sentiment_{code}.csv
 │   └── predict_news.py                单条新闻推理示例
-├── forecast/                          价格预测与行为调制
-│   ├── lstm_price.py                  PriceLSTM 定义
-│   ├── dataset.py                     滑动窗口数据集（window=20）
-│   └── train_lstm_price_with_news.py  主实验：训练 + 两种预测 + 落盘
-├── analysis/                          聚合统计与绘图
-│   ├── aggregate.py                   单日结果 → all_results_aggregated.csv / stock_MAE_MRE.csv
-│   ├── improve_probability.py         改善概率 → count.csv
-│   ├── trend_consistency.py           趋势一致率 → trend_same_statistics.csv
-│   ├── draw_price_comparison.py       真实价/基线/调制 三线对比图
-│   └── draw_improve_probability.py    改善概率条形图
-├── common.py                          路径常量与股票池加载
-├── configs/stocks.txt                 16 只股票池
-├── data/sample/                       样例数据
-├── results/aggregated/                论文结果（表 4/5/6 的数据源与图）
+├── forecast/                          单股演练 CLI（薄包装，复用 baff 包）
+├── analysis/                          论文原始流程的聚合与绘图脚本
+├── tests/                             pytest 单元测试（95 个用例）
+├── configs/                           stocks.txt + experiment.yaml
+├── data/sample/                       单日样例（论文 Table 3）
+├── results/                           论文结果 + 可复现结果（见 results/README.md）
 ├── figures/                           生成的图表
-├── docs/                              项目结构文档
+├── docs/EXPERIMENTS.md                升级实验的设计与结论
 ├── third_party/FinBERT2.md            上游依赖说明
 └── run_pipeline.sh                    一键流水线
 ```
@@ -103,6 +109,16 @@ export TUSHARE_TOKEN=<your_token>
 ```bash
 bash run_pipeline.sh
 ```
+
+跑完整的可复现实验（固定随机种子）：
+
+```bash
+python experiments/run_backtest.py      # 逐日重训回测，约 16 分钟
+python experiments/run_ablations.py     # α 扫描 / 机制对比 / 显著性检验，秒级
+pytest tests -q                         # 95 个单元测试
+```
+
+实验设计与结论见 [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md)。
 
 也可以单只股票分步试跑：
 
@@ -162,6 +178,21 @@ python analysis/aggregate.py
 实验期恰逢地缘政治不确定性上升，宏观因子主导定价时，公司层面新闻情绪的解释力被系统性削弱。
 更完整的讨论见论文第 3.5 节。
 
+### 可复现实验（2026-10 升级）
+
+固定随机种子、把验证窗口扩到 45 个交易日、补上统计检验后，结论比论文更细：
+
+- 论文机制（sign, α=0.5）的改善 +0.026/股，Wilcoxon p=0.60，**不显著**；
+  扫描 α ∈ [0, 1] 的最优值（≈0.4）也只有 +0.030（p=0.50）；
+- 去掉方向一致性（只按情绪强弱缩放）后调制**显著恶化**（p<0.001）——
+  机制里真正干活的是方向一致性项，不是情绪强度；
+- 特征拼接对照组实跑：拼接 MAE 4.72 > 基线 4.63 > 调制 4.61，论文
+  "调制优于拼接"的机制选择**首次获得实证支持**；
+- 根因发现：情绪分 44% 的样本 > 0.9、仅 19.6% 为负，区分度严重不足——
+  这是调制效果有限的更底层原因，比"宏观环境"的解释更可操作。
+
+详见 [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md)。
+
 ## 上游依赖与致谢
 
 情绪编码环节复用熵简科技开源的 **FinBERT2** 套件，该套件以 MIT 协议独立开源，
@@ -174,9 +205,13 @@ python analysis/aggregate.py
 ## 局限
 
 - 日度情绪分用等权平均聚合，假设当日各条新闻等权且独立，丢失新闻间交互。
-- 调制强度 α 固定为 0.5，未做逐股、逐时段寻优。
+- 情绪分分布严重偏正（44% 的样本 > 0.9），区分度有限——这比调制机制本身
+  更底层，校准情绪分可能收益更大（[docs/EXPERIMENTS.md](docs/EXPERIMENTS.md) §2）。
+- 调制强度已做 α 全域扫描与显著性检验（本仓库升级），但任何取值都不显著；
+  逐股、逐时段的自适应 α 留待后续。
 - 情绪与价格的时间对齐存在隐含假设，需进一步验证是否存在信息错位。
-- 实验窗口仅约 21 个交易日，样本量小，易受个别行情影响。
+- 全部结果基于单随机种子；多种子方差估计是自然的下一步
+  （[docs/EXPERIMENTS.md](docs/EXPERIMENTS.md) §7）。
 
 ## License
 

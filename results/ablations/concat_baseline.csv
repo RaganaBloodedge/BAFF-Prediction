@@ -1,0 +1,4 @@
+route,MAE
+"behaviour_modulation(paper, alpha=0.5)",4.607627772435534
+no_sentiment(baseline),4.633651515967472
+feature_concat(sentiment as input channel),4.721318099368478
